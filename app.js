@@ -11,7 +11,12 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: ["https://menuonlinedashboard.vercel.app", "https://menuonlineclient.vercel.app"],
+    origin: [
+      "https://menuonlinedashboard.vercel.app",
+      "https://menuonlineclient.vercel.app",
+      "http://localhost:3001",
+      "http://localhost:3000",
+    ],
   },
 });
 
@@ -21,7 +26,12 @@ require("dotenv").config();
 
 app.use(
   cors({
-    origin: ["https://menuonlinedashboard.vercel.app", "https://menuonlineclient.vercel.app"],
+    origin: [
+      "https://menuonlinedashboard.vercel.app",
+      "https://menuonlineclient.vercel.app",
+      "http://localhost:3001",
+      "http://localhost:3000",
+    ],
   })
 );
 
