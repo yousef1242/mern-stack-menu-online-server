@@ -33,13 +33,13 @@ const createProductsController = asyncHandler(async (req, res) => {
           ...req.body,
           image: result.secure_url,
         });
-        if (req.body.size && req.body.price) {
-          const { size, price } = req.body;
+        if (req.body.sizeAndPriceInputs) {
+          const { sizeAndPriceInputs } = req.body;
 
-          for (let i = 0; i < size.length && i < price.length; i++) {
+          for (let i = 0; i < sizeAndPriceInputs.length; i++) {
             newProduct.sizes.push({
-              size: size[i],
-              price: price[i],
+              size: sizeAndPriceInputs[i].size,
+              price: sizeAndPriceInputs[i].price,
             });
           }
         }
