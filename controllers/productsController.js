@@ -22,25 +22,31 @@ const createProductsController = asyncHandler(async (req, res) => {
         const result = await cloudinary.uploader.upload(req.file.path, {
           resource_type: "image",
           format: "webp", // Set the format to WebP
-          transformation : {
-            width : 300,
-            height : 300,
-            crop : "fill",
-          }
+          transformation: {
+            width: 300,
+            height: 300,
+            crop: "fill",
+          },
         });
 
         const newProduct = new Products({
           ...req.body,
           image: result.secure_url,
         });
-        if (req.body.sizeAndPriceInputs) {
-          const { sizeAndPriceInputs } = req.body;
-
-          for (let i = 0; i < sizeAndPriceInputs.length; i++) {
-            newProduct.sizes.push({
-              size: sizeAndPriceInputs[i].size,
-              price: sizeAndPriceInputs[i].price,
-            });
+        if (req.body.size && req.body.price) {
+          const { size, price } = req.body;
+          if (Array.isArray(size) && Array.isArray(price)) {
+            for (let i = 0; i < size.length && i < price.length; i++) {
+              newProduct.sizes.push({
+                size: size[i],
+                price: price[i],
+              });
+            }
+          } else {
+            newProduct.sizes = {
+              size: size,
+              price: price,
+            };
           }
         }
         await newProduct.save();
@@ -148,22 +154,25 @@ const updateProductController = asyncHandler(async (req, res) => {
         });
         updateData.image = result.secure_url;
       }
-
       if (req.body.size && req.body.price) {
         const { size, price } = req.body;
-
         const sizes = [];
-
-        for (let i = 0; i < size.length && i < price.length; i++) {
+        if (Array.isArray(size) && Array.isArray(price)) {
+          for (let i = 0; i < size.length && i < price.length; i++) {
+            sizes.push({
+              size: size[i],
+              price: price[i],
+            });
+          }
+          updateData.sizes = sizes;
+        } else {
           sizes.push({
-            size: size[i],
-            price: price[i],
+            size: size,
+            price: price,
           });
+          updateData.sizes = sizes;
         }
-
-        updateData.sizes = sizes;
       }
-
       const updatedProduct = await Products.findByIdAndUpdate(
         req.params.productId,
         {
