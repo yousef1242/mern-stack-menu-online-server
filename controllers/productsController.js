@@ -25,7 +25,8 @@ const createProductsController = asyncHandler(async (req, res) => {
           transformation: {
             width: 300,
             height: 300,
-            crop: "fill",
+            crop: "fit", // Use "fit" for resizing while maintaining the aspect ratio
+            quality: "auto:best", // Set the quality to the best
           },
         });
 

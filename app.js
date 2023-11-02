@@ -79,7 +79,9 @@ io.on("connection", (socket) => {
           populate: "productId",
         }
       );
-      io.to(order.restaurantId).emit(
+      const convertRestaurantIdToString = getOrderFromDatabase.restaurantId.toString();
+      console.log(convertRestaurantIdToString);
+      io.to(convertRestaurantIdToString).emit(
         "newOrderCreatedToRestaurantId",
         getOrderFromDatabase
       );

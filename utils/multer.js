@@ -8,7 +8,8 @@ module.exports = multer({
     if (
       ext !== ".jpeg" &&
       ext !== ".jpg" &&
-      ext !== ".webp"
+      ext !== ".webp" &&
+      ext !== ".png"
     ) {
       const error = new Error("File type is not supported");
       error.status = 400;

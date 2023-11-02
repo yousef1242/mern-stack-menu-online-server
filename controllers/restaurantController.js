@@ -14,8 +14,16 @@ const createRestaurantController = asyncHandler(async (req, res) => {
   } else {
     if (req.file) {
       const hashPassword = await bcrypt.hash(req.body.restaurantPassword, 10);
+      // Upload the resized WebP image to Cloudinary
       const resultImage = await cloudinary.uploader.upload(req.file.path, {
         resource_type: "image",
+        format: "webp", // Set the format to WebP
+        transformation: {
+          width: 100,
+          height: 100,
+          crop: "fit", // Use "fit" for resizing while maintaining the aspect ratio
+          quality: "auto:best", // Set the quality to the best
+        },
       });
       const newRestaurant = new Restaurant({
         ...req.body,
@@ -56,8 +64,8 @@ const loginToRestaurantController = asyncHandler(async (req, res) => {
           process.env.JWT_SECRET_KEY
         );
         return res.status(200).json({
-          id : restaurant._id,
-          token : token,
+          id: restaurant._id,
+          token: token,
         });
       } else {
         return res.status(500).json({
@@ -72,7 +80,9 @@ const loginToRestaurantController = asyncHandler(async (req, res) => {
 
 // get single resaurant
 const getSingleRestaurantController = asyncHandler(async (req, res) => {
-  const restaurant = await Restaurant.findById(req.params.retaurantId).select("-restaurantPassword")
+  const restaurant = await Restaurant.findById(req.params.retaurantId).select(
+    "-restaurantPassword"
+  );
   if (!restaurant) {
     return res.status(500).json({ message: "This restaurant doesn't exist" });
   } else {

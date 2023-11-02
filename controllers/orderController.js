@@ -3,46 +3,6 @@ const crypto = require("crypto");
 const { Order } = require("../models/order");
 const { Restaurant } = require("../models/restaurant");
 
-// create order
-const createOrderController = asyncHandler(async (req, res) => {
-  const neworder = new Order({
-    ...req.body,
-  });
-  neworder.orderNumber = crypto.randomBytes(5).toString("hex");
-
-  if (
-    req.body.productIds &&
-    req.body.quantatys &&
-    req.body.sizes &&
-    req.body.prices
-  ) {
-    const { productIds, quantatys, sizes, prices } = req.body;
-
-    for (
-      let i = 0;
-      i < productIds.length &&
-      i < quantatys.length &&
-      i < sizes.length &&
-      i < prices.length;
-      i++
-    ) {
-      neworder.products.push({
-        productId: productIds[i],
-        quantaty: quantatys[i],
-        size: sizes[i],
-        price: prices[i],
-      });
-    }
-  } else {
-    return;
-  }
-
-  const saveOrder = await neworder.save();
-  res
-    .status(200)
-    .json({ message: "Order has completed", saveOrder: saveOrder });
-});
-
 // get all orders for restaurant
 const getAllOrdersForRestaurantController = asyncHandler(async (req, res) => {
   const restaurant = await Restaurant.findById(req.params.restaurantId);
@@ -124,7 +84,6 @@ const updateOrderStatusForRestaurantController = asyncHandler(
 );
 
 module.exports = {
-  createOrderController,
   getAllOrdersForRestaurantController,
   updateOrderStatusForRestaurantController,
 };
