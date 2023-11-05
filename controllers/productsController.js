@@ -173,10 +173,8 @@ const updateProductController = asyncHandler(async (req, res) => {
             quality: "auto:best", // Set the quality to the best
           },
         });
-        updateData.image = {
-          url: result.secure_url,
-          publicId: result.public_id,
-        };
+        updateData.image.url = result.secure_url;
+        updateData.image.publicId = result.public_id;
       }
       if (req.body.size && req.body.price) {
         const { size, price } = req.body;
