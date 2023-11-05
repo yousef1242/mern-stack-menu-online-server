@@ -4,6 +4,7 @@ const {
   getCategoriesForRestaurantController,
 } = require("../controllers/categoryController");
 const { checkSubscribtion, checkSubscribtionEnd } = require("../middleware/checkSubscribe");
+const { validateObjectId } = require("../middleware/objectIdValidate");
 const { verifyToken } = require("../middleware/verifyToken");
 
 const router = require("express").Router();
@@ -27,6 +28,6 @@ router.delete(
 );
 
 // get categories for restaurant
-router.get("/:restaurantId", getCategoriesForRestaurantController);
+router.get("/:restaurantId", validateObjectId, getCategoriesForRestaurantController);
 
 module.exports = router;

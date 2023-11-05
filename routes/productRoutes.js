@@ -11,7 +11,7 @@ const {
 } = require("../middleware/checkSubscribe");
 const { verifyToken } = require("../middleware/verifyToken");
 const storage = require("../utils/multer");
-
+const { validateObjectId } = require("../middleware/objectIdValidate");
 const router = require("express").Router();
 
 // create product
@@ -27,12 +27,14 @@ router.post(
 // get all products for restaurant
 router.get(
   "/:restaurantId",
+  validateObjectId,
   getAllProductsController
 );
 
 // get single product for restaurant
 router.get(
   "/:productId/:restaurantId",
+  validateObjectId,
   verifyToken,
   checkSubscribtion,
   checkSubscribtionEnd,

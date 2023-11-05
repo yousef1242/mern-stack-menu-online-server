@@ -9,35 +9,46 @@ const createRestaurantController = asyncHandler(async (req, res) => {
   const restaurant = await Restaurant.findOne({
     restaurantName: req.body.restaurantName,
   });
+  const restaurantEmail = await Restaurant.findOne({
+    restaurantEmail: req.body.restaurantEmail,
+  });
   if (restaurant) {
-    return res.status(500).json({ message: "This restaurant is exist" });
+    return res.status(500).json({ message: "This restaurant already exist" });
+  }
+  if (restaurantEmail) {
+    return res.status(500).json({ message: "This restaurant already exist" });
+  }
+  if (req.file) {
+    const hashPassword = await bcrypt.hash(req.body.restaurantPassword, 10);
+    // Initialize the newRestaurant variable
+    const newRestaurant = new Restaurant({
+      ...req.body,
+      restaurantPassword: hashPassword,
+    });
+
+    // Upload the image to Cloudinary with the folder set to newRestaurant._id
+    const resultImage = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "image",
+      format: "webp",
+      transformation: {
+        width: 100,
+        height: 100,
+        crop: "fit",
+        quality: "auto:best",
+      },
+      folder: newRestaurant.restaurantName, // Set the folder to the _id of the new restaurant
+    });
+
+    // Assign the restaurantImage property after uploading the image
+    newRestaurant.restaurantImage = resultImage.secure_url;
+
+    const saveRestaurant = await newRestaurant.save();
+    return res.status(200).json({
+      message: "Your restaurant account has been created",
+      saveRestaurant: saveRestaurant,
+    });
   } else {
-    if (req.file) {
-      const hashPassword = await bcrypt.hash(req.body.restaurantPassword, 10);
-      // Upload the resized WebP image to Cloudinary
-      const resultImage = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "image",
-        format: "webp", // Set the format to WebP
-        transformation: {
-          width: 100,
-          height: 100,
-          crop: "fit", // Use "fit" for resizing while maintaining the aspect ratio
-          quality: "auto:best", // Set the quality to the best
-        },
-      });
-      const newRestaurant = new Restaurant({
-        ...req.body,
-        restaurantImage: resultImage.secure_url,
-        restaurantPassword: hashPassword,
-      });
-      const saveRestaurant = await newRestaurant.save();
-      return res.status(200).json({
-        message: "Your restaurant account has been created",
-        saveRestaurant: saveRestaurant,
-      });
-    } else {
-      return res.status(500).json({ message: "Please choose image" });
-    }
+    return res.status(500).json({ message: "Please choose image" });
   }
 });
 
@@ -80,7 +91,7 @@ const loginToRestaurantController = asyncHandler(async (req, res) => {
 
 // get single resaurant
 const getSingleRestaurantController = asyncHandler(async (req, res) => {
-  const restaurant = await Restaurant.findById(req.params.retaurantId).select(
+  const restaurant = await Restaurant.findById(req.params.restaurantId).select(
     "-restaurantPassword"
   );
   if (!restaurant) {
@@ -102,7 +113,17 @@ const getSingleRestaurantController = asyncHandler(async (req, res) => {
 
 // subscribe in plan
 const subscribeInPlanController = asyncHandler(async (req, res) => {
-  const restaurant = await Restaurant.findById(req.params.restaurantId);
+  if (!req.body.restaurantEmail) {
+    return res
+      .status(404)
+      .json({ message: "Please write your restaurant email" });
+  }
+  const restaurant = await Restaurant.findOne({
+    restaurantEmail: req.body.restaurantEmail,
+  });
+  if (!restaurant) {
+    return res.status(404).json({ message: "Restaurant does not exist" });
+  }
   if (
     !restaurant.restaurantSubscribePlan?.planName &&
     restaurant.restaurantSubscribePlan?.endDate === null
@@ -116,7 +137,7 @@ const subscribeInPlanController = asyncHandler(async (req, res) => {
 
       // Get the updated date
       const updatedDate = currentDate.toDateString();
-      await Restaurant.findByIdAndUpdate(req.params.restaurantId, {
+      await Restaurant.findByIdAndUpdate(restaurant._id, {
         $set: {
           restaurantSubscribePlan: {
             planeName: "month",
@@ -126,7 +147,7 @@ const subscribeInPlanController = asyncHandler(async (req, res) => {
       });
       return res
         .status(200)
-        .json({ message: "You subscibed in month plan successfully" });
+        .json({ message: "Monthly plan subscribed successfully." });
     } else if (req.body.planName === "year") {
       // Get the current date
       const currentDate = new Date();
@@ -136,7 +157,7 @@ const subscribeInPlanController = asyncHandler(async (req, res) => {
 
       // Get the updated date
       const updatedDate = currentDate.toDateString();
-      await Restaurant.findByIdAndUpdate(req.params.restaurantId, {
+      await Restaurant.findByIdAndUpdate(restaurant._id, {
         $set: {
           restaurantSubscribePlan: {
             planeName: "year",
@@ -146,7 +167,7 @@ const subscribeInPlanController = asyncHandler(async (req, res) => {
       });
       return res
         .status(200)
-        .json({ message: "You subscibed in year plan successfully" });
+        .json({ message: "Yearly plan subscribed successfully." });
     }
   } else {
     return res
@@ -155,9 +176,37 @@ const subscribeInPlanController = asyncHandler(async (req, res) => {
   }
 });
 
+// check email exist when restaurant sebscribe
+const checkEmailExistWhenRestaurantSubscribeController = asyncHandler(
+  async (req, res) => {
+    if (!req.body.restaurantEmail) {
+      return res
+        .status(404)
+        .json({ message: "Please write your restaurant email" });
+    }
+    const restaurant = await Restaurant.findOne({
+      restaurantEmail: req.body.restaurantEmail,
+    });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant does not exist" });
+    }
+    if (
+      !restaurant.restaurantSubscribePlan?.planName &&
+      restaurant.restaurantSubscribePlan?.endDate === null
+    ) {
+      return res.status(200).json({ message: "ok" });
+    } else {
+      return res
+        .status(404)
+        .json({ message: "This restaurant already subscribed" });
+    }
+  }
+);
+
 module.exports = {
   createRestaurantController,
   loginToRestaurantController,
   getSingleRestaurantController,
   subscribeInPlanController,
+  checkEmailExistWhenRestaurantSubscribeController,
 };

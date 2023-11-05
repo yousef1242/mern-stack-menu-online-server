@@ -3,10 +3,19 @@ const {
   loginToRestaurantController,
   subscribeInPlanController,
   getSingleRestaurantController,
+  checkEmailExistWhenRestaurantSubscribeController,
 } = require("../controllers/restaurantController");
-const storage = require("../utils/multer")
+const { validateObjectId } = require("../middleware/objectIdValidate");
+const storage = require("../utils/multer");
 
 const router = require("express").Router();
+
+// get single restaurant
+router.get(
+  "/single/:restaurantId",
+  validateObjectId,
+  getSingleRestaurantController
+);
 
 // create restaurant
 router.post("/create", storage.single("image"), createRestaurantController);
@@ -15,9 +24,12 @@ router.post("/create", storage.single("image"), createRestaurantController);
 router.post("/login", loginToRestaurantController);
 
 // subscribe in plan
-router.put("/subscribe/:restaurantId", subscribeInPlanController);
+router.put("/subscribe", subscribeInPlanController);
 
-// get single restaurant
-router.get("/single/:retaurantId", getSingleRestaurantController);
+// check email exist when restaurant sebscribe
+router.post(
+  "/check-email-subscribe",
+  checkEmailExistWhenRestaurantSubscribeController
+);
 
 module.exports = router;

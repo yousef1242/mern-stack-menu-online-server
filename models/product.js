@@ -31,8 +31,11 @@ const productsShcema = new mongoose.Schema({
     required: true,
   },
   image: {
-    type: String,
-    required: true,
+    type: Object,
+    default: {
+      url: "",
+      publicId: null,
+    },
   },
   isAvilable: {
     type: Boolean,

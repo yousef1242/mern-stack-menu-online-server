@@ -22,6 +22,7 @@ const createProductsController = asyncHandler(async (req, res) => {
         const result = await cloudinary.uploader.upload(req.file.path, {
           resource_type: "image",
           format: "webp", // Set the format to WebP
+          folder: restaurant.restaurantName,
           transformation: {
             width: 300,
             height: 300,
@@ -32,7 +33,10 @@ const createProductsController = asyncHandler(async (req, res) => {
 
         const newProduct = new Products({
           ...req.body,
-          image: result.secure_url,
+          image: {
+            url: result.secure_url,
+            publicId: result.public_id,
+          },
         });
         if (req.body.size && req.body.price) {
           const { size, price } = req.body;
@@ -114,7 +118,7 @@ const deleteProductController = asyncHandler(async (req, res) => {
   } else {
     const product = await Products.findById(req.params.productId);
     if (!product) {
-      return res.status(500).json({ message: "This product doesn't exist" });
+      return res.status(404).json({ message: "This product doesn't exist" });
     } else {
       if (
         !restaurant.restaurantSubscribePlan?.planName &&
@@ -124,8 +128,15 @@ const deleteProductController = asyncHandler(async (req, res) => {
           message: "This restaurant doesn't subscribe in any plan",
         });
       } else {
-        await Products.findByIdAndDelete(req.params.productId);
-        return res.status(200).json({ message: "Product has been deleted" });
+        try {
+          if (product.image && product.image.publicId) {
+            await cloudinary.uploader.destroy(product.image.publicId);
+          }
+
+          await Products.findByIdAndDelete(req.params.productId);
+        } catch (error) {
+          return res.status(500).json({ message: "Error deleting product" });
+        }
       }
     }
   }
@@ -150,10 +161,22 @@ const updateProductController = asyncHandler(async (req, res) => {
       };
 
       if (req.file) {
+        // Upload the resized WebP image to Cloudinary
         const result = await cloudinary.uploader.upload(req.file.path, {
           resource_type: "image",
+          format: "webp", // Set the format to WebP
+          folder: restaurant.restaurantName,
+          transformation: {
+            width: 300,
+            height: 300,
+            crop: "fit", // Use "fit" for resizing while maintaining the aspect ratio
+            quality: "auto:best", // Set the quality to the best
+          },
         });
-        updateData.image = result.secure_url;
+        updateData.image = {
+          url: result.secure_url,
+          publicId: result.public_id,
+        };
       }
       if (req.body.size && req.body.price) {
         const { size, price } = req.body;
