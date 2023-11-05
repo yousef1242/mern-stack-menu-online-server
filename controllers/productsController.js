@@ -134,6 +134,8 @@ const deleteProductController = asyncHandler(async (req, res) => {
           }
 
           await Products.findByIdAndDelete(req.params.productId);
+
+          return res.status(200).json({ message: "Product has been deleted" });
         } catch (error) {
           return res.status(500).json({ message: "Error deleting product" });
         }
@@ -158,6 +160,10 @@ const updateProductController = asyncHandler(async (req, res) => {
     } else {
       const updateData = {
         ...req.body,
+        image : {
+          url : req.body.productImageUrl,
+          publicId : req.body.productImagePublicId,
+        }
       };
 
       if (req.file) {
@@ -173,8 +179,10 @@ const updateProductController = asyncHandler(async (req, res) => {
             quality: "auto:best", // Set the quality to the best
           },
         });
-        updateData.image.url = result.secure_url;
-        updateData.image.publicId = result.public_id;
+        updateData.image = {
+          url: result.secure_url,
+          publicId: result.public_id,
+        };
       }
       if (req.body.size && req.body.price) {
         const { size, price } = req.body;
